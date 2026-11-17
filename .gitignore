@@ -1,6 +1,4 @@
 node_modules
-.next
-out
-*.tsbuildinfo
-.env*.local
+dist
+*.log
 .DS_Store

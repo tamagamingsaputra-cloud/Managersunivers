@@ -1,54 +1,34 @@
-# Sports Manager Simulator
+# Sports Manager Simulator v1.0
 
-Game manajemen olahraga berbasis web (sepak bola, voli, basket, motorsport). Versi **0.1 = Fondasi**:
-dunia dengan geografi nyata dan klub fiktif, kalender, simulasi latar belakang di Web Worker,
-jalur karier (manajer klub / pendiri perusahaan), keuangan sementara, dan save/load lokal (IndexedDB).
+Simulasi manajemen olahraga berbasis web: voli, basket, sepak bola, motorsport.
+Arsitektur lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Arsitektur dan roadmap: lihat `docs/ARSITEKTUR.md`.
+## Memulai
 
-## Jalankan dari nol di Termux (Android)
-
-```sh
-pkg update && pkg upgrade
-pkg install nodejs-lts git unzip
-termux-setup-storage            # izinkan akses penyimpanan, sekali saja
-
-cd ~
-unzip ~/storage/downloads/sports-manager-sim.zip
-cd sports-manager-sim
-
+```bash
 npm install
-npm run dev -- -H 0.0.0.0       # buka http://localhost:3000 di browser HP
+npm install react react-dom @babylonjs/core @babylonjs/loaders maplibre-gl zustand react-router-dom dexie zod comlink
+npm install -D typescript vite @vitejs/plugin-react vitest fast-check @playwright/test @types/react @types/react-dom
+npm run verify   # typecheck + batas modul + tes
+npm run dev
 ```
 
-Perintah lain: `npm run typecheck`, `npm test`, `npm run build`.
+`package.json` sengaja belum mencantumkan versi dependensi: perintah `npm install` di atas akan
+mengunci versi terbaru yang kompatibel ke `package.json` dan `package-lock.json` di mesin Anda.
+Paket yang baru dipakai di fase berikutnya (Babylon.js, MapLibre, Dexie, Zod, Comlink, Zustand,
+React Router, Playwright) boleh dipasang belakangan.
 
-Catatan Termux: `npm install` pertama kali bisa lama. Jika Next.js mengeluh soal SWC native,
-jalankan `npm install @next/swc-wasm-nodejs` lalu ulangi. Jika build kehabisan memori, tutup aplikasi lain
-atau jalankan `NODE_OPTIONS=--max-old-space-size=1536 npm run build`.
+## Status
 
-## Repo baru dan deploy
+| Fase | Status |
+|------|--------|
+| 0 Perkakas | Selesai: TypeScript strict, Vite, Vitest, penegak batas modul |
+| 1 Kernel | Sebagian: ID, RNG, kalender, scheduler, jam, event bus. Belum: worker + RPC, adapter IndexedDB, pengukuran anggaran |
+| 2+ | Belum dimulai |
 
-```sh
-git init
-git add .
-git commit -m "Fondasi Sports Manager Simulator v0.1"
-git branch -M main
-git remote add origin <URL-repo-kosong-anda>
-git push -u origin main
-```
+## Aturan penting `src/sim-core`
 
-Netlify: Add new site -> Import from Git -> pilih repo. Build command `npm run build`
-(sudah ada di `netlify.toml`); Netlify mendeteksi Next.js otomatis. Belum ada environment variable
-yang wajib. Data game disimpan di browser pemain (IndexedDB), tidak di server.
-
-## Struktur
-
-```
-src/engine/   simulasi murni TypeScript (tanpa React/DOM): core, time, world, economy, sim, match, worker
-src/persistence/   IndexedDB (Dexie) + migrasi versi save
-src/ui/       komponen React, store Zustand, penghubung ke worker
-src/app/      halaman Next.js
-tests/        unit + integrasi untuk engine
-docs/         dokumen arsitektur
-```
+- Tanpa DOM, React, Babylon, atau API browser (dicek oleh `tsconfig.core.json` dan `npm run check:boundaries`).
+- Tanpa `Math.random`, `Date.now`, `new Date`, timer, atau I/O. Gunakan `Rng`, kalender, dan `runUntil`.
+- Impor antar-modul hanya lewat `index.ts` modul tujuan.
+- Nilai golden RNG di `tests/unit/rng.test.ts` menjaga kompatibilitas simpanan: jangan ubah algoritma tanpa migrasi.
